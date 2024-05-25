@@ -1,0 +1,20 @@
+[
+  {
+    "applyTo": "register",
+    "headers": [
+      {
+        "name": "allow",
+        "value": "GET,POST,OPTIONS"
+      }
+    ]
+  },
+  {
+    "applyTo": "*",
+    "headers": [
+      {
+        "name": "header-name-1",
+        "value": "header value"
+      }
+    ]
+  }
+]

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAuthn Demo</title>
+</head>
+<body>
+    <h1>WebAuthn Demo</h1>
+    <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username">
+        <button id="registerButton">Register</button>
+    </div>
+    <script>
+        const registerButton = document.getElementById('registerButton');
+
+        registerButton.addEventListener('click', async () => {
+            const username = document.getElementById('username').value;
+            if (!username) {
+                alert('Please enter a username');
+                return;
+            }
+
+            const registrationResponse = await fetch('/register', {
+            
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+
+            if (!registrationResponse.ok) {
+                alert('Failed to start registration');
+                return;
+            }
+
+            const registrationOptions = await registrationResponse.json();
+            registrationOptions.challenge = Uint8Array.from(atob(registrationOptions.challenge), c => c.charCodeAt(0));
+            registrationOptions.user.id = Uint8Array.from(atob(registrationOptions.user.id), c => c.charCodeAt(0));
+
+            const credential = await navigator.credentials.create({ publicKey: registrationOptions });
+            const attestation = {
+                id: credential.id,
+                rawId: Array.from(new Uint8Array(credential.rawId)),
+                response: {
+                    attestationObject: Array.from(new Uint8Array(credential.response.attestationObject)),
+                    clientDataJSON: Array.from(new Uint8Array(credential.response.clientDataJSON))
+                },
+                type: credential.type
+            };
+
+            const verificationResponse = await fetch('/register/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, attestation })
+            });
+
+            const verificationResult = await verificationResponse.json();
+            if (verificationResult.status === 'ok') {
+                alert('Registration successful');
+            } else {
+                alert('Registration failed');
+            }
+        });
+    </script>
+</body>
+</html>
